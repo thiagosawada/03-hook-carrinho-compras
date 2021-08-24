@@ -39,7 +39,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       const productAdded = updatedCart.find(item => item.id === productId);
 
       if (productAdded) {
-        const { data: stock } = await api.get(`stock/${productId}`);
+        const { data: stock } = await api.get<Stock>(`stock/${productId}`);
 
         if (productAdded.amount >= stock.amount) {
           toast.error('Quantidade solicitada fora de estoque');
@@ -48,7 +48,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
         productAdded.amount += 1;
       } else {
-        const { data: product } = await api.get(`products/${productId}`);
+        const { data: product } = await api.get<Product>(`products/${productId}`);
         const newProduct = { ...product, amount: 1 };
         updatedCart.push(newProduct);
       }
@@ -83,23 +83,27 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
     amount,
   }: UpdateProductAmount) => {
     try {
-      const productAddedIndex = cart.findIndex(item => item.id === productId);
+      if (amount <= 0) return;
 
-      const { data: stock } = await api.get(`stock/${productId}`);
+      const { data: stock } = await api.get<Stock>(`stock/${productId}`);
 
-      if (cart[productAddedIndex].amount + amount > stock.amount) {
+      if (amount > stock.amount) {
         toast.error('Quantidade solicitada fora de estoque');
         return;
       }
 
-      cart[productAddedIndex].amount += amount;
+      const updatedCart = [...cart];
+      const productAdded = updatedCart.find(product => product.id === productId);
 
-      const updatedCartData = [...cart];
-      localStorage.setItem('@RocketShoes:cart', JSON.stringify(updatedCartData));
-      setCart(updatedCartData);
+      if (productAdded) {
+        productAdded.amount = amount;
+        localStorage.setItem('@RocketShoes:cart', JSON.stringify(updatedCart));
+        setCart(updatedCart);
+      } else {
+        throw Error();
+      }
     } catch {
       toast.error('Erro na alteração de quantidade do produto');
-      return;
     }
   };
 
