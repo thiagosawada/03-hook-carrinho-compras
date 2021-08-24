@@ -20,11 +20,11 @@ interface Product {
 const Cart = (): JSX.Element => {
   const { cart, removeProduct, updateProductAmount } = useCart();
 
-  const cartFormatted = cart.map((product) => {
-    product.priceFormatted = formatPrice(product.price);
-    product.subTotal = formatPrice(product.price * product.amount);
-    return product;
-  });
+  const cartFormatted = cart.map((product) => ({
+    ...product,
+    priceFormatted: formatPrice(product.price),
+    subTotal: formatPrice(product.price * product.amount),
+  }));
 
   const total =
     formatPrice(
